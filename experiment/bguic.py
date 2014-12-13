@@ -11,7 +11,10 @@ global_font = QtGui.QFont()
 
 
 def _set_font(font, app):
-    '''Private function to set font; called by individual components'''
+    '''Private function to set font; called by individual components
+       More restricted in what can be set than what the public dialog
+       can do.
+    '''
     if font is None:
         font = global_font.family(), global_font.pointSize()
     try:
@@ -25,6 +28,15 @@ def _set_font(font, app):
     except:
         print("Can not set font. Expected font = (family:str, size:int).")
         print("Got font =", font)
+
+def set_global_font():
+    '''GUI component to set default font'''
+    global global_font
+    app = QtGui.QApplication([])
+    font, ok = QtGui.QFontDialog.getFont(global_font, None)
+    app.quit()
+    if ok:
+        global_font = font
 
 
 def text_input(message="Enter your response", default="", font=None):
