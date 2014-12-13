@@ -16,4 +16,5 @@ inspired by easygui, so that they could be used by beginners.
 Documentation
 -------------
 
-Not planned for the near future.
+Not planned for the near future; however, a readme file should be
+included in most subdirectories.
