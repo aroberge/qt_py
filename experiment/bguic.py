@@ -25,9 +25,11 @@ find_qm_files()
 
 
 class SimpleApp(QtGui.QApplication):
-    def __init__(self, locale=None, font=None):
+    def __init__(self, locale=None, font_size=None):
         super().__init__([])
-        self.set_font(font)
+        if font_size is not None:
+            self.set_font_size(font_size)
+        self.setFont(config['font'])
         self.set_locale(locale)
 
     def set_locale(self, locale):
@@ -41,32 +43,48 @@ class SimpleApp(QtGui.QApplication):
             if config['translator'].load("qt_"+config['locale'], qm_files[config['locale']]):
                 self.installTranslator(config['translator'])
 
-    def set_font(self, font):
-        '''Simple method to set font; called by individual GUI components.
-           More restricted in what can be set than what the public dialog
-           can do.
+    def set_font_size(self, font_size):
+        '''Simple method to set font size; also called by individual GUI components.
         '''
-        if font is None:
-            font = config['font'].family(), config['font'].pointSize()
         try:
-            family, size = font
-            if family:
-                config['font'].setFamily(family)
-            if size:
-                config['font'].setPointSize(size)
-            self.setFont(config['font'])
+            config['font'].setPointSize(font_size)
         except:
-            print("Can not set font. Expected font = (family:str, size:int).")
-            print("Got font =", font)
+            print("Can not set font size.")
 
-class LanguageChooser(QtGui.QDialog):
-    def __init__(self, app, title="Language selection", name="Language codes",
+    def show_text_input(self, message="message", title="title",
+                        default_response=""):
+        flags = QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint
+        text, ok = QtGui.QInputDialog.getText(None, title, message,
+                               QtGui.QLineEdit.Normal, default_response, flags)
+        if ok:
+            return text
+
+    def show_yes_no_question(self, question="question", title="title"):
+        reply = QtGui.QMessageBox.question(None, title, question,
+            QtGui.QMessageBox.Yes | QtGui.QMessageBox.No | QtGui.QMessageBox.Cancel)
+        if reply == QtGui.QMessageBox.Yes:
+            return True
+        elif reply == QtGui.QMessageBox.No:
+            return False
+        else:
+            return None
+
+    def show_select_language(self, title="Select language",
+                            name="Language codes",
+                            instruction="Click button when you are done"):
+        selector = LanguageSelector(self, title=title, name=name,
+                              instruction=instruction)
+        selector.exec_()
+
+
+class LanguageSelector(QtGui.QDialog):
+    def __init__(self, parent, title="Language selection", name="Language codes",
                  instruction="Click button when you are done"):
         super().__init__(None,  QtCore.Qt.WindowSystemMenuHint |
                                 QtCore.Qt.WindowTitleHint)
 
         self.qm_files_choices = {}
-        self.app = app
+        self.parent = parent
 
         group_box = QtGui.QGroupBox(name)
         group_box_layout = QtGui.QGridLayout()
@@ -96,15 +114,15 @@ class LanguageChooser(QtGui.QDialog):
         self.locale = self.qm_files_choices[self.sender()]
 
     def confirm(self):
-        self.app.set_locale(self.locale)
+        self.parent.set_locale(self.locale)
         self.close()
 
 
-def set_global_font(app=None, font=None, locale=None):
+def set_global_font(app=None, locale=None):
     '''GUI component to set default font'''
     if app is None:
         app_quit = True
-        app = SimpleApp(font=font, locale=locale)
+        app = SimpleApp(locale=locale)
     else:
         app_quit = False
     font, ok = QtGui.QFontDialog.getFont(config['font'], None)
@@ -114,64 +132,37 @@ def set_global_font(app=None, font=None, locale=None):
         config['font'] = font
 
 
-def text_input(app=None, message="Enter your response", default="", font=None,
-               locale=None, title="Title"):
-    '''Simple frameless text input box.
+def text_input(message="Enter your response", title="Title",
+               default_response="",
+               font_size: int = None,
+               locale: "most often two letter code such as 'fr'" = None):
+    '''Simple text input box.  Used to query the user and get a string back.
+    '''
+    app = SimpleApp(font_size=font_size, locale=locale)
+    response = app.show_text_input(message=message, title=title,
+                               default_response=default_response)
+    app.quit()
+    return response
 
-       'font' is a tuple: (family:str, size:int).
-      '''
-    if app is None:
-        app_quit = True
-        app = SimpleApp(font=font, locale=locale)
-    else:
-        app_quit = False
-    flags = QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint
-    text, ok = QtGui.QInputDialog.getText(None, title,
-        message, QtGui.QLineEdit.Normal, default, flags)
-    if app_quit:
-        app.quit()
-    if ok:
-        return text
 
-def yes_no_question(message="Answer this question", title="Title",
-                    font=None, locale=None, app=None):
+def yes_no_question(question="Answer this question", title="Title",
+                    font_size=None, locale=None):
     '''Simple yes or no question
-
-       'font' is a tuple: (family:str, size:int).
       '''
-    if app is None:
-        app_quit = True
-        app = SimpleApp(font=font, locale=locale)
-    else:
-        app_quit = False
 
-    reply = QtGui.QMessageBox.question(None, title, message,
-            QtGui.QMessageBox.Yes | QtGui.QMessageBox.No | QtGui.QMessageBox.Cancel)
-    if reply == QtGui.QMessageBox.Yes:
-        return True
-    elif reply == QtGui.QMessageBox.No:
-        return False
-    else:
-        return None
-    if app_quit:
-        app.quit()
-    return reply
+    app = SimpleApp(font_size=font_size, locale=locale)
+    answer= app.show_yes_no_question(question=question, title=title)
+    app.quit()
+    return answer
 
 
-def choose_language(app=None, title="Select language", name="Language codes",
+def select_language(title="Select language", name="Language codes",
                  instruction="Click button when you are done"):
     '''Dialog to choose language based on some locale code for
        files found on default path'''
-    if app is None:
-        app_quit = True
-        app = SimpleApp()
-    else:
-        app_quit = False
-    chooser = LanguageChooser(app=app, title=title, name=name,
-                              instruction=instruction)
-    chooser.exec_()
-    if app_quit:
-        app.quit()
+    app = SimpleApp()
+    app.show_select_language(title=title, name=name, instruction=instruction)
+    app.quit()
 
 
 

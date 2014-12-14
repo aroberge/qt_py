@@ -1,22 +1,26 @@
 import bguic
 
-print("choosing a new ui language")
-bguic.choose_language()
+print("Selecting a new ui language")
+bguic.select_language()
 
-print("\n before asking yes or no question")
 answer = bguic.yes_no_question("Make a wise choice")
-print(answer)
+print("\nAnswer to yes or no question: ", answer)
 
-print("Simple text input demo")
-answer = bguic.text_input()
-print(answer)
+answer = bguic.text_input(font_size=16)
+print("\nResponse to text_input query:", answer)
 
+answer = bguic.yes_no_question("Font still big?")
+print("\nFont still too big?: ", answer)
+
+print("\nSetting global font")
 bguic.set_global_font()
 
-print("Simple text input demo after changing global font")
 answer = bguic.text_input()
-print(answer)
+print("\nResponse to default text input query:", answer)
 
-print("\n font setting after last locale change")
-bguic.set_global_font()
+print("\nTesting class methods")
+app = bguic.SimpleApp()
+app.show_select_language()
+print(app.show_text_input("Query from app"))
+print(app.show_yes_no_question("Query from app"))
 
