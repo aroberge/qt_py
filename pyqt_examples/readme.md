@@ -16,3 +16,5 @@ I use Python 3.4 and PyQt 4.10.4 for testing
 
 * integer_input_dialog1: simple dialog that ask a user to imput a number within
                          a specified range.
+
+* message_box: simple message box
