@@ -1,13 +1,14 @@
 '''Basic Graphical User Interface Components
 '''
 import os
+from collections import OrderedDict
 from PyQt4 import QtGui, QtCore
 
 config = {}
 config['font'] = QtGui.QFont()
 config['translator'] = QtCore.QTranslator()
 config['locale'] = 'en'
-qm_files = {}
+qm_files = OrderedDict()
 
 def find_qm_files():
     '''looking for files with names == qt_locale.qm'''
