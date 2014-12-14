@@ -1,65 +1,78 @@
+# pylint: disable=C0330
 """Basic Graphical User Interface Components
 """
 import os
 from collections import OrderedDict
 from PyQt4 import QtGui, QtCore
 
-config = {}
-config['font'] = QtGui.QFont()
-config['translator'] = QtCore.QTranslator()
-config['locale'] = 'default'
-qm_files = OrderedDict()
+CONFIG = {}
+CONFIG['font'] = QtGui.QFont()
+CONFIG['translator'] = QtCore.QTranslator()
+CONFIG['locale'] = 'default'
 
 
 def find_qm_files():
     """looking for files with names == qt_locale.qm"""
-    all_files = []
+    all_files = OrderedDict()
     for root, _, files in os.walk(os.path.join(QtGui.__file__, "..")):
         for fname in files:
-            if (fname.endswith('.qm') and
-                fname.startswith("qt_") and
-                    not fname.startswith("qt_help")):
+            if (fname.endswith('.qm') and fname.startswith("qt_")
+                    and not fname.startswith("qt_help")):
                 locale = fname[3:-3]
-                all_files.append(locale)
-                qm_files[locale] = root
-find_qm_files()
+                all_files[locale] = root
+    return all_files
+QM_FILES = find_qm_files()
 
 
 class SimpleApp(QtGui.QApplication):
+    """A simple extention of the basic QApplication
+       with added methods useful for working with dialogs
+       that are not class based.
+      """
     def __init__(self, locale=None, font_size=None):
         super().__init__([])
         if font_size is not None:
             self.set_font_size(font_size)
-        self.setFont(config['font'])
+        self.setFont(CONFIG['font'])
         self.set_locale(locale)
 
     def set_locale(self, locale):
-        if locale in qm_files:
-            if config['translator'].load("qt_"+locale, qm_files[locale]):
-                self.installTranslator(config['translator'])
-                config['locale'] = locale
+        """Sets the language of the basic controls for PyQt
+           from a locale - provided that the corresponding qm files
+           are present in the PyQt distribution.
+        """
+        if locale in QM_FILES:
+            if CONFIG['translator'].load("qt_"+locale, QM_FILES[locale]):
+                self.installTranslator(CONFIG['translator'])
+                CONFIG['locale'] = locale
             else:
                 print("language not available")
-        elif locale is "default" and config['locale'] != 'default':
-            self.removeTranslator(config['translator'])
-            config['translator'] = QtCore.QTranslator()
-            config['locale'] = 'default'
-        elif config['locale'] in qm_files:
-            if config['translator'].load("qt_"+config['locale'], qm_files[config['locale']]):
-                self.installTranslator(config['translator'])
+        elif locale is "default" and CONFIG['locale'] != 'default':
+            self.removeTranslator(CONFIG['translator'])
+            CONFIG['translator'] = QtCore.QTranslator()
+            CONFIG['locale'] = 'default'
+        elif CONFIG['locale'] in QM_FILES:
+            if CONFIG['translator'].load("qt_"+CONFIG['locale'],
+                                         QM_FILES[CONFIG['locale']]):
+                self.installTranslator(CONFIG['translator'])
 
     @staticmethod
     def set_font_size(font_size):
-        """Simple method to set font size; also called by individual GUI components.
+        """Simple method to set font size; also called by individual GUI
+           components.
         """
         try:
-            config['font'].setPointSize(font_size)
-        except:
-            print("Can not set font size.")
+            CONFIG['font'].setPointSize(font_size)
+        except TypeError:
+            print("font_size must be an integer")
 
     @staticmethod
     def show_text_input(message="message", title="title",
                         default_response=""):
+        """Obtain a response as a string from a user following a query.
+           In many ways, this is meant as a GUI replacement for
+           Python's input().
+        """
         flags = QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint
         text, ok = QtGui.QInputDialog.getText(None, title, message,
                                QtGui.QLineEdit.Normal, default_response, flags)
@@ -68,8 +81,13 @@ class SimpleApp(QtGui.QApplication):
 
     @staticmethod
     def show_yes_no_question(question="question", title="title"):
+        """Obtain a response as "yes" (returns True), "no" (returns False)
+           or "cancel" (returns None).
+        """
         reply = QtGui.QMessageBox.question(None, title, question,
-                        QtGui.QMessageBox.Yes | QtGui.QMessageBox.No | QtGui.QMessageBox.Cancel)
+                        QtGui.QMessageBox.Yes
+                        | QtGui.QMessageBox.No
+                        | QtGui.QMessageBox.Cancel)
         if reply == QtGui.QMessageBox.Yes:
             return True
         elif reply == QtGui.QMessageBox.No:
@@ -80,16 +98,24 @@ class SimpleApp(QtGui.QApplication):
     def show_select_language(self, title="Select language",
                              name="Language codes",
                              instruction="Click button when you are done"):
+        """Calls a special dialog showing locale for language (qm) files
+        that were found so that the language of the UI can be set.
+        """
         selector = _LanguageSelector(self, title=title, name=name,
                                      instruction=instruction)
         selector.exec_()
 
 
 class _LanguageSelector(QtGui.QDialog):
-    def __init__(self, parent, title="Language selection", name="Language codes",
+    """A specially constructed dialog which uses informations about
+       available language (qm) files which can be used to change the
+       default language of the basic PyQt ui components.
+    """
+    def __init__(self, parent, title="Language selection",
+                 name="Language codes",
                  instruction="Click button when you are done"):
-        super().__init__(None,  QtCore.Qt.WindowSystemMenuHint |
-                                QtCore.Qt.WindowTitleHint)
+        super().__init__(None, QtCore.Qt.WindowSystemMenuHint |
+                               QtCore.Qt.WindowTitleHint)
 
         self.qm_files_choices = {}
         self.parent = parent
@@ -97,7 +123,7 @@ class _LanguageSelector(QtGui.QDialog):
         group_box = QtGui.QGroupBox(name)
         group_box_layout = QtGui.QGridLayout()
 
-        for i, locale in enumerate(qm_files):
+        for i, locale in enumerate(QM_FILES):
             check_box = QtGui.QCheckBox(locale)
             check_box.setAutoExclusive(True)
             self.qm_files_choices[check_box] = locale
@@ -111,7 +137,7 @@ class _LanguageSelector(QtGui.QDialog):
         check_box.setAutoExclusive(True)
         self.qm_files_choices[check_box] = "default"
         check_box.toggled.connect(self.check_box_toggled)
-        i = len(qm_files)
+        i = len(QM_FILES)
         group_box_layout.addWidget(check_box, i / 4, i % 4)
 
         group_box.setLayout(group_box_layout)
@@ -129,9 +155,11 @@ class _LanguageSelector(QtGui.QDialog):
         self.setWindowTitle(title)
 
     def check_box_toggled(self):
+        """Callback when a checkbox is toggled"""
         self.locale = self.qm_files_choices[self.sender()]
 
     def confirm(self):
+        """Callback from confirm_button used to set the locale"""
         self.parent.set_locale(self.locale)
         self.close()
 
@@ -143,17 +171,17 @@ def set_global_font(app=None, locale=None):
         app = SimpleApp(locale=locale)
     else:
         app_quit = False
-    font, ok = QtGui.QFontDialog.getFont(config['font'], None)
+    font, ok = QtGui.QFontDialog.getFont(CONFIG['font'], None)
     if app_quit:
         app.quit()
     if ok:
-        config['font'] = font
+        CONFIG['font'] = font
 
 
 def text_input(message="Enter your response", title="Title",
                default_response="",
-               font_size: int = None,
-               locale: "most often two letter code such as 'fr'" = None):
+               font_size: int=None,
+               locale: "most often two letter code such as 'fr'"=None):
     """Simple text input box.  Used to query the user and get a string back.
     """
     app = SimpleApp(font_size=font_size, locale=locale)
