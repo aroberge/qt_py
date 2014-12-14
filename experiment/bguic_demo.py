@@ -12,8 +12,8 @@ print("\nResponse to text_input query:", answer)
 print("Selecting a new ui language")
 bguic.select_language()
 
-answer = bguic.yes_no_question("Font still big?")
-print("\nFont still too big?: ", answer)
+answer = bguic.yes_no_question("Font too big?")
+print("\nFont too big?: ", answer)
 
 if answer:
     print("\nSetting global font")
