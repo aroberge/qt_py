@@ -210,6 +210,32 @@ def select_language(title="Select language", name="Language codes",
     app.show_select_language(title=title, name=name, instruction=instruction)
     app.quit()
 
+def message_box(message="Message", title="Title", font_size=None, locale=None):
+    """Simple message box.
+    """
+    app = SimpleApp(font_size=font_size, locale=locale)
+    box = QtGui.QMessageBox(None)
+    box.setWindowTitle(title)
+    box.setText(message)
+    box.show()
+    box.exec_()
+    app.quit()
+
+
+def integer_input(message="Choose a number", title="Title",
+                  default_value=1, min_=0, max_=100, step=1):
+    """Simple dialog to ask a user to select a number within a certain range
+    """
+    app = QtGui.QApplication([])
+
+    flags = QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint
+
+    number, ok = QtGui.QInputDialog.getInteger(None,
+                title, message, default_value, min_, max_, step, flags)
+    app.quit()
+    if ok:
+        return number
+
 
 if __name__ == '__main__':
     try:

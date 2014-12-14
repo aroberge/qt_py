@@ -30,9 +30,12 @@ def message_box(message="Message", title="Title", icon=None):
     if icon is not None:
         box.setWindowIcon(QtGui.QIcon(icon))
     else:
+        # could not get the temp file to live long enough to be usable.
+        # start by creating one to get a valid path/filename
         temp_file = TemporaryFile(suffix=".png")
         fname = temp_file.name
         temp_file.close()
+        # use that path/filename to write a real file.
         ff = open(fname, "wb")
         ff.write(base64.b64decode(encoded_icon))
         ff.close()
