@@ -1,51 +1,72 @@
 '''Basic Graphical User Interface Components
-
-The font for all components can be change/set globally at any time using:
-
-    >>> global_font.setFamily(family:str)
-    >>> global_font.setPointSize(size:int)
 '''
+import os
 from PyQt4 import QtGui, QtCore
 
-global_font = QtGui.QFont()
+_FONT = QtGui.QFont()
+_TRANSLATOR = QtCore.QTranslator()
+_LOCALE = 'en'
+
+LOCALES = {}
+
+for root, dirs, files in os.walk(os.path.join(QtGui.__file__, "..")):
+    for fname in files:
+        if fname.endswith('.qm') and fname.startswith("qt_"):
+            LOCALES[fname[3:-3]] = root
+
+class SimpleApp(QtGui.QApplication):
+    def __init__(self, locale=None, font=None):
+        super().__init__([])
+        self.set_font(font)
+        self.set_locale(locale)
+
+    def set_locale(self, locale):
+        global _LOCALE
+        if locale is not None and locale in LOCALES:
+            if _TRANSLATOR.load("qt_"+locale, LOCALES[locale]):
+                self.installTranslator(_TRANSLATOR)
+                _LOCALE = locale
+            else:
+                print("language not available")
+        elif _LOCALE in LOCALES:
+            if _TRANSLATOR.load("qt_"+_LOCALE, LOCALES[_LOCALE]):
+                self.installTranslator(_TRANSLATOR)
+
+    def set_font(self, font):
+        '''Simple method to set font; called by individual GUI components.
+           More restricted in what can be set than what the public dialog
+           can do.
+        '''
+        if font is None:
+            font = _FONT.family(), _FONT.pointSize()
+        try:
+            family, size = font
+            if family:
+                _FONT.setFamily(family)
+            if size:
+                _FONT.setPointSize(size)
+            self.setFont(_FONT)
+        except:
+            print("Can not set font. Expected font = (family:str, size:int).")
+            print("Got font =", font)
 
 
-def _set_font(font, app):
-    '''Private function to set font; called by individual components
-       More restricted in what can be set than what the public dialog
-       can do.
-    '''
-    if font is None:
-        font = global_font.family(), global_font.pointSize()
-    try:
-        family, size = font
-        current_font = QtGui.QFont()
-        if family:
-            current_font.setFamily(family)
-        if size:
-            current_font.setPointSize(size)
-        app.setFont(current_font)
-    except:
-        print("Can not set font. Expected font = (family:str, size:int).")
-        print("Got font =", font)
-
-def set_global_font():
+def set_global_font(font=None, locale=None):
     '''GUI component to set default font'''
-    global global_font
-    app = QtGui.QApplication([])
-    font, ok = QtGui.QFontDialog.getFont(global_font, None)
+    global _FONT
+    app = SimpleApp(font=font, locale=locale)
+    font, ok = QtGui.QFontDialog.getFont(_FONT, None)
     app.quit()
     if ok:
-        global_font = font
+        _FONT = font
 
 
-def text_input(message="Enter your response", default="", font=None):
+def text_input(message="Enter your response", default="", font=None, locale=None):
     '''Simple frameless text input box.
 
        'font' is a tuple: (family:str, size:int).
       '''
-    app = QtGui.QApplication([])
-    _set_font(font, app)
+    app = SimpleApp(font=font, locale=locale)
 
     flags = QtCore.Qt.WindowFlags()
     flags |= QtCore.Qt.FramelessWindowHint
