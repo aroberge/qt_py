@@ -10,8 +10,11 @@ print("Simple text input demo after changing global font")
 answer = bguic.text_input()
 print(answer)
 
-print("Simple text input demo with French locale")
-answer = bguic.text_input(locale='fr')
+print("choosing a new ui language")
+bguic.choose_language()
+
+print("Simple text input demo after changing language")
+answer = bguic.text_input()
 print(answer)
 
 print("\n font setting after last locale change")

@@ -3,16 +3,25 @@
 import os
 from PyQt4 import QtGui, QtCore
 
-_FONT = QtGui.QFont()
-_TRANSLATOR = QtCore.QTranslator()
-_LOCALE = 'en'
+config = {}
+config['font'] = QtGui.QFont()
+config['translator'] = QtCore.QTranslator()
+config['locale'] = 'en'
+qm_files = {}
 
-LOCALES = {}
+def find_qm_files():
+    '''looking for files with names == qt_locale.qm'''
+    all_files = []
+    for root, _, files in os.walk(os.path.join(QtGui.__file__, "..")):
+        for fname in files:
+            if (fname.endswith('.qm') and
+                fname.startswith("qt_") and
+                not fname.startswith("qt_help")):
+                locale = fname[3:-3]
+                all_files.append(locale)
+                qm_files[locale] = root
+find_qm_files()
 
-for root, dirs, files in os.walk(os.path.join(QtGui.__file__, "..")):
-    for fname in files:
-        if fname.endswith('.qm') and fname.startswith("qt_"):
-            LOCALES[fname[3:-3]] = root
 
 class SimpleApp(QtGui.QApplication):
     def __init__(self, locale=None, font=None):
@@ -21,16 +30,15 @@ class SimpleApp(QtGui.QApplication):
         self.set_locale(locale)
 
     def set_locale(self, locale):
-        global _LOCALE
-        if locale is not None and locale in LOCALES:
-            if _TRANSLATOR.load("qt_"+locale, LOCALES[locale]):
-                self.installTranslator(_TRANSLATOR)
-                _LOCALE = locale
+        if locale is not None and locale in qm_files:
+            if config['translator'].load("qt_"+locale, qm_files[locale]):
+                self.installTranslator(config['translator'])
+                config['locale'] = locale
             else:
                 print("language not available")
-        elif _LOCALE in LOCALES:
-            if _TRANSLATOR.load("qt_"+_LOCALE, LOCALES[_LOCALE]):
-                self.installTranslator(_TRANSLATOR)
+        elif config['locale'] in qm_files:
+            if config['translator'].load("qt_"+config['locale'], qm_files[config['locale']]):
+                self.installTranslator(config['translator'])
 
     def set_font(self, font):
         '''Simple method to set font; called by individual GUI components.
@@ -38,44 +46,104 @@ class SimpleApp(QtGui.QApplication):
            can do.
         '''
         if font is None:
-            font = _FONT.family(), _FONT.pointSize()
+            font = config['font'].family(), config['font'].pointSize()
         try:
             family, size = font
             if family:
-                _FONT.setFamily(family)
+                config['font'].setFamily(family)
             if size:
-                _FONT.setPointSize(size)
-            self.setFont(_FONT)
+                config['font'].setPointSize(size)
+            self.setFont(config['font'])
         except:
             print("Can not set font. Expected font = (family:str, size:int).")
             print("Got font =", font)
 
 
-def set_global_font(font=None, locale=None):
+class LanguageChooser(QtGui.QDialog):
+    def __init__(self, app, title="Language codes",
+                 instruction="Click button when you are done"):
+        super().__init__(None, QtCore.Qt.FramelessWindowHint)
+
+        self.qm_files_choices = {}
+        self.app = app
+
+        group_box = QtGui.QGroupBox(title)
+        group_box_layout = QtGui.QGridLayout()
+
+        for i, locale in enumerate(qm_files):
+            check_box = QtGui.QCheckBox(locale)
+            check_box.setAutoExclusive(True)
+            self.qm_files_choices[check_box] = locale
+            check_box.toggled.connect(self.check_box_toggled)
+            group_box_layout.addWidget(check_box, i / 4, i % 4)
+
+        group_box.setLayout(group_box_layout)
+
+        button_box = QtGui.QDialogButtonBox()
+
+        confirm_button = button_box.addButton(QtGui.QDialogButtonBox.Ok)
+        confirm_button.clicked.connect(self.confirm)
+
+        main_layout = QtGui.QVBoxLayout()
+        main_layout.addWidget(group_box)
+        main_layout.addWidget(QtGui.QLabel(instruction))
+        main_layout.addWidget(button_box)
+        self.setLayout(main_layout)
+
+    def check_box_toggled(self):
+        self.locale = self.qm_files_choices[self.sender()]
+
+    def confirm(self):
+        self.app.set_locale(self.locale)
+        self.close()
+
+
+def set_global_font(app=None, font=None, locale=None):
     '''GUI component to set default font'''
-    global _FONT
-    app = SimpleApp(font=font, locale=locale)
-    font, ok = QtGui.QFontDialog.getFont(_FONT, None)
-    app.quit()
+    if app is None:
+        app_quit = True
+        app = SimpleApp(font=font, locale=locale)
+    else:
+        app_quit = False
+    font, ok = QtGui.QFontDialog.getFont(config['font'], None)
+    if app_quit:
+        app.quit()
     if ok:
-        _FONT = font
+        config['font'] = font
 
 
-def text_input(message="Enter your response", default="", font=None, locale=None):
+def text_input(app=None, message="Enter your response", default="", font=None, locale=None):
     '''Simple frameless text input box.
 
        'font' is a tuple: (family:str, size:int).
       '''
-    app = SimpleApp(font=font, locale=locale)
-
+    if app is None:
+        app_quit = True
+        app = SimpleApp(font=font, locale=locale)
+    else:
+        app_quit = False
     flags = QtCore.Qt.WindowFlags()
     flags |= QtCore.Qt.FramelessWindowHint
-
     text, ok = QtGui.QInputDialog.getText(None, '',
         message, QtGui.QLineEdit.Normal, default, flags)
-    app.quit()
+    if app_quit:
+        app.quit()
     if ok:
         return text
+
+
+def choose_language(app=None, title="Language codes",
+                 instruction="Click button when you are done"):
+    if app is None:
+        app_quit = True
+        app = SimpleApp()
+    else:
+        app_quit = False
+    chooser = LanguageChooser(app=app, title=title, instruction=instruction)
+    chooser.exec_()
+    if app_quit:
+        app.quit()
+
 
 
 if __name__ == '__main__':
