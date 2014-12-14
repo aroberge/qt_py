@@ -14,7 +14,8 @@ I use Python 3.4 and PyQt 4.10.4 for testing
 * text_input_dialog2: removing frame
 * text_input_dialog3: no frame, customizable font
 
-* integer_input_dialog1: simple dialog that ask a user to imput a number within
-                         a specified range.
+* integer_input_dialog1: simple dialog that ask a user to input a number within a specified range.
 
 * message_box: simple message box
+* message_box2: message box with configurable icon
+* message_box3: message box with configurable icon and default icon embedded in source coe
