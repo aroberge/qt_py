@@ -7,7 +7,7 @@ from PyQt4 import QtGui, QtCore
 config = {}
 config['font'] = QtGui.QFont()
 config['translator'] = QtCore.QTranslator()
-config['locale'] = 'en'
+config['locale'] = 'default'
 qm_files = OrderedDict()
 
 def find_qm_files():
@@ -33,12 +33,17 @@ class SimpleApp(QtGui.QApplication):
         self.set_locale(locale)
 
     def set_locale(self, locale):
-        if locale is not None and locale in qm_files:
+        print(locale, config['locale'])
+        if locale in qm_files:
             if config['translator'].load("qt_"+locale, qm_files[locale]):
                 self.installTranslator(config['translator'])
                 config['locale'] = locale
             else:
                 print("language not available")
+        elif locale is "default" and config['locale'] != 'default':
+            self.removeTranslator(config['translator'])
+            config['translator'] = QtCore.QTranslator()
+            config['locale'] = 'default'
         elif config['locale'] in qm_files:
             if config['translator'].load("qt_"+config['locale'], qm_files[config['locale']]):
                 self.installTranslator(config['translator'])
@@ -95,6 +100,13 @@ class LanguageSelector(QtGui.QDialog):
             self.qm_files_choices[check_box] = locale
             check_box.toggled.connect(self.check_box_toggled)
             group_box_layout.addWidget(check_box, i / 4, i % 4)
+
+        check_box = QtGui.QCheckBox("None")
+        check_box.setAutoExclusive(True)
+        self.qm_files_choices[check_box] = "default"
+        check_box.toggled.connect(self.check_box_toggled)
+        i = len(qm_files)
+        group_box_layout.addWidget(check_box, i / 4, i % 4)
 
         group_box.setLayout(group_box_layout)
 
