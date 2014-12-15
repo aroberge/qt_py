@@ -44,8 +44,8 @@ def guessing_game():
             title = "Too high"
             max_ = guess
     else:
-        bguic.message_box(message="Congratulations {}! {} was the answer.".format(name, guess),
-                          title="You win!")
+        message="Congratulations {}! {} was the answer.".format(name, guess)
+        bguic.message_box(message, title="You win!")
 
 
 if __name__ == '__main__':
