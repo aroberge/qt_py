@@ -20,36 +20,52 @@ from random import randint
 #    print("\nSetting global font")
 #    bguic.set_global_font()
 #
-#answer = bguic.text_input()
-#print("\nResponse to default text input query:", answer)
-#
-#print("\nTesting class methods")
-#app = bguic.SimpleApp()
-#app.show_select_language()
-#print(app.show_text_input("Query from app"))
-#print(app.show_yes_no_question("Query from app"))
+
 
 
 ####################################
-bguic.message_box(message="Let's play a game", title="Guessing game!")
-min_ = 1
+name = bguic.text_input(message="What is your name?",
+                        title="Mine is Reeborg.")
+if not name:
+    name = "Unknown person"
+
+
+bguic.message_box(message="The following language selection will only affect"+
+                  " the default GUI elements like the text on the buttons",
+                  title="For information")
+bguic.select_language()
+
+
+bguic.message_box(message="If the text is too small or too large, you can fix that",
+                  title="For information")
+bguic.set_global_font()
+
+bguic.message_box(message="Hello {}. Let's play a game".format(name),
+                  title="Guessing game!")
+
+guess = min_ = 1
 max_ = 50
 answer = randint(min_, max_)
-print(answer)
-guess = 0
 title = "Guessing game"
 while guess != answer:
     message = "Guess a number between {} and {}".format(min_, max_)
+    prev_guess = guess
     guess = bguic.integer_input(message=message, title=title,
                           default_value=guess, min_=min_ ,max_=max_)
-    if guess < answer:
+    if guess is None:
+        quitting = bguic.yes_no_question("Do you want to quit?")
+        guess = prev_guess
+        if quitting:
+            break
+    elif guess < answer:
         title = "Too low"
         min_ = guess
     elif guess > answer:
         title = "Too high"
         max_ = guess
-
-bguic.message_box(message="{} was the answer".format(guess), title="You win!")
+else:
+    bguic.message_box(message="Congratulations {}! {} was the answer.".format(name, guess),
+                      title="You win!")
 
 
 

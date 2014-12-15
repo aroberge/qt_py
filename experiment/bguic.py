@@ -3,12 +3,39 @@
 """
 import os
 from collections import OrderedDict
+from functools import wraps
+from inspect import signature
 from PyQt4 import QtGui, QtCore
 
 CONFIG = {}
 CONFIG['font'] = QtGui.QFont()
 CONFIG['translator'] = QtCore.QTranslator()
 CONFIG['locale'] = 'default'
+
+
+def with_app(func):
+    """Intended to be used as a decorator to ensure that a single app
+       is running before the function is called, and stopped afterwords
+    """
+    def _decorator(*args, **kwargs):
+        """A single decorator would be enough to start an app before the
+           function is called. By using an inner decorator, we can quit
+           the app after the function is done.
+        """
+        app = SimpleApp()
+        kwargs['app'] = app
+        try:
+            response = func(*args, **kwargs)
+        except TypeError:
+            sig = signature(func)
+            if 'app' in sig.parameters.values():
+                raise
+            else:
+                del kwargs['app']
+                response = func(*args, **kwargs)
+        app.quit()
+        return response
+    return wraps(func)(_decorator)
 
 
 def find_qm_files():
@@ -79,21 +106,6 @@ class SimpleApp(QtGui.QApplication):
         if ok:
             return text
 
-    @staticmethod
-    def show_yes_no_question(question="question", title="title"):
-        """Obtain a response as "yes" (returns True), "no" (returns False)
-           or "cancel" (returns None).
-        """
-        reply = QtGui.QMessageBox.question(None, title, question,
-                        QtGui.QMessageBox.Yes
-                        | QtGui.QMessageBox.No
-                        | QtGui.QMessageBox.Cancel)
-        if reply == QtGui.QMessageBox.Yes:
-            return True
-        elif reply == QtGui.QMessageBox.No:
-            return False
-        else:
-            return None
 
     def show_select_language(self, title="Select language",
                              name="Language codes",
@@ -191,48 +203,51 @@ def text_input(message="Enter your response", title="Title",
     return response
 
 
+@with_app
 def yes_no_question(question="Answer this question", title="Title",
                     font_size=None, locale=None):
-    """Simple yes or no question
-      """
+    """Simple yes or no question; returns True for "Yes", False for "No"
+       and None for "Cancel".
+    """
+    reply = QtGui.QMessageBox.question(None, title, question,
+                    QtGui.QMessageBox.Yes
+                    | QtGui.QMessageBox.No
+                    | QtGui.QMessageBox.Cancel)
+    if reply == QtGui.QMessageBox.Yes:
+        return True
+    elif reply == QtGui.QMessageBox.No:
+        return False
 
-    app = SimpleApp(font_size=font_size, locale=locale)
-    answer = app.show_yes_no_question(question=question, title=title)
-    app.quit()
-    return answer
-
-
+@with_app
 def select_language(title="Select language", name="Language codes",
-                 instruction="Click button when you are done"):
+                 instruction="Click button when you are done", app=None):
     """Dialog to choose language based on some locale code for
-       files found on default path"""
-    app = SimpleApp()
-    app.show_select_language(title=title, name=name, instruction=instruction)
-    app.quit()
+       files found on default path
+       """
+    selector = _LanguageSelector(app, title=title, name=name,
+                                     instruction=instruction)
+    selector.exec_()
 
-def message_box(message="Message", title="Title", font_size=None, locale=None):
+
+@with_app
+def message_box(message="Message", title="Title"):
     """Simple message box.
     """
-    app = SimpleApp(font_size=font_size, locale=locale)
     box = QtGui.QMessageBox(None)
     box.setWindowTitle(title)
     box.setText(message)
     box.show()
     box.exec_()
-    app.quit()
 
 
+@with_app
 def integer_input(message="Choose a number", title="Title",
                   default_value=1, min_=0, max_=100, step=1):
     """Simple dialog to ask a user to select a number within a certain range
     """
-    app = QtGui.QApplication([])
-
     flags = QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint
-
     number, ok = QtGui.QInputDialog.getInteger(None,
                 title, message, default_value, min_, max_, step, flags)
-    app.quit()
     if ok:
         return number
 
