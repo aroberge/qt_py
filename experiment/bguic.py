@@ -1,4 +1,3 @@
-# pylint: disable=C0330
 """Basic Graphical User Interface Components
 """
 import os
@@ -49,7 +48,6 @@ def find_qm_files():
                 locale = fname[3:-3]
                 all_files[locale] = root
     return all_files
-
 
 QM_FILES = find_qm_files()
 
