@@ -27,15 +27,28 @@ class MultipleChoicesDialog(QtGui.QMainWindow):
 
         main_layout.addWidget(self.choices_widget)
 
-        Button_01 = QtGui.QPushButton("Print Current Items")
-        Button_01.clicked.connect(self.printCurrentItems)
-        main_layout.addWidget(Button_01)
+        return_choices_btn = QtGui.QPushButton("Ok")
+        return_choices_btn.clicked.connect(self.return_choices)
+        select_all_btn = QtGui.QPushButton("Select all")
+        select_all_btn.clicked.connect(self.select_all)
+        clear_all_btn = QtGui.QPushButton("Clear all")
+        clear_all_btn.clicked.connect(self.clear_all)
+
+        main_layout.addWidget(return_choices_btn)
+        main_layout.addWidget(select_all_btn)
+        main_layout.addWidget(clear_all_btn)
+
+        # todo: add buttons Ok, Cancel, Select all, Clear
 
 
-    def printCurrentItems(self):
-        for item in self.choices_widget.selectedItems():
-            print("Current Items are : ", item.text())
+    def return_choices(self):
+        print([item.text() for item in self.choices_widget.selectedItems()])
 
+    def select_all(self):
+        self.choices_widget.selectAll()
+
+    def clear_all(self):
+        self.choices_widget.clearSelection()
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
