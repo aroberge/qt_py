@@ -27,6 +27,10 @@ class MultipleChoicesDialog(QtGui.QMainWindow):
 
         main_layout.addWidget(self.choices_widget)
 
+
+#        button_box = QtGui.QGroupBox(name)
+        button_box_layout = QtGui.QGridLayout()
+
         return_choices_btn = QtGui.QPushButton("Ok")
         return_choices_btn.clicked.connect(self.return_choices)
         select_all_btn = QtGui.QPushButton("Select all")
@@ -34,12 +38,17 @@ class MultipleChoicesDialog(QtGui.QMainWindow):
         clear_all_btn = QtGui.QPushButton("Clear all")
         clear_all_btn.clicked.connect(self.clear_all)
 
-        main_layout.addWidget(return_choices_btn)
-        main_layout.addWidget(select_all_btn)
-        main_layout.addWidget(clear_all_btn)
+
+        button_box = QtGui.QWidget()
+        button_box_layout.addWidget(select_all_btn, 0, 0)
+        button_box_layout.addWidget(clear_all_btn, 1, 0)
+        button_box_layout.addWidget(return_choices_btn, 1, 1)
+        button_box.setLayout(button_box_layout)
+
+        main_layout.addWidget(button_box)
+
 
         # todo: add buttons Ok, Cancel, Select all, Clear
-
 
     def return_choices(self):
         print([item.text() for item in self.choices_widget.selectedItems()])
