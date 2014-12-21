@@ -11,70 +11,74 @@ class MultipleChoicesDialog(QtGui.QDialog):
         if choices is None:
             choices = ["Item %d"%i for i in range(10)]
         self.setWindowTitle(title)
+        self.selection = []
 
         main_widget = QtGui.QWidget()
         main_layout = QtGui.QVBoxLayout()
         main_widget.setLayout(main_layout)
-        #self.setCentralWidget(main_widget)
 
         self.choices_widget = QtGui.QListWidget()
         self.choices_widget.setSelectionMode(
                                     QtGui.QAbstractItemView.ExtendedSelection)
-
         for choice in choices:
             item = QtGui.QListWidgetItem()
             item.setText(choice)
             self.choices_widget.addItem(item)
-
         main_layout.addWidget(self.choices_widget)
 
-
-#        button_box = QtGui.QGroupBox(name)
         button_box_layout = QtGui.QGridLayout()
-
-        return_choices_btn = QtGui.QPushButton("Ok")
-        return_choices_btn.clicked.connect(self.return_choices)
+        selection_completed_btn = QtGui.QPushButton("Ok")
+        selection_completed_btn.clicked.connect(self.selection_completed)
         select_all_btn = QtGui.QPushButton("Select all")
         select_all_btn.clicked.connect(self.select_all)
         clear_all_btn = QtGui.QPushButton("Clear all")
         clear_all_btn.clicked.connect(self.clear_all)
-
+        cancel_btn = QtGui.QPushButton("Cancel")
+        cancel_btn.clicked.connect(self.cancel)
 
         button_box = QtGui.QWidget()
         button_box_layout.addWidget(select_all_btn, 0, 0)
         button_box_layout.addWidget(clear_all_btn, 1, 0)
-        button_box_layout.addWidget(return_choices_btn, 1, 1)
+        button_box_layout.addWidget(cancel_btn, 0, 1)
+        button_box_layout.addWidget(selection_completed_btn, 1, 1)
         button_box.setLayout(button_box_layout)
 
         main_layout.addWidget(button_box)
         self.setLayout(main_layout)
         self.show()
 
-
-        # todo: add buttons Ok, Cancel, Select all, Clear
-
-    def return_choices(self):
+    def selection_completed(self):
+        """Selection completed, set the value and close"""
         self.selection = [item.text() for item in
                           self.choices_widget.selectedItems()]
         self.close()
 
     def select_all(self):
+        """Set all possible values as selected"""
         self.choices_widget.selectAll()
+        self.selection = [item.text() for item in
+                          self.choices_widget.selectedItems()]
 
     def clear_all(self):
+        """Reset to have no selected values"""
         self.choices_widget.clearSelection()
+        self.selection = []
 
-    def get_values(self):
-        return self.selection
+    def cancel(self):
+        """cancel and set the selection to an empty list"""
+        self.selection = []
+        self.close()
 
 
 if __name__ == '__main__':
 
-    def get_selection():
+    def get_choices(title="Title", choices=None):
+        """Show a list of possible choices to be selected;
+           returns the values selected in a list"""
         app = QtGui.QApplication([])
-        a = MultipleChoicesDialog()
+        dialog = MultipleChoicesDialog(title=title, choices=choices)
         app.exec_()
-        return a.get_values()
+        return dialog.selection
 
-    b = get_selection()
+    b = get_choices()
     print(b)
