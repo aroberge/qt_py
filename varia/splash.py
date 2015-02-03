@@ -8,7 +8,8 @@ import PyQt4.QtGui as Gui
 def show_message(message):
     '''shows a message as a splash screen'''
     app = Gui.QApplication(sys.argv)
-    label = Gui.QLabel("<font color=blue size=20><b>" + message + "</b></font>")
+    label = Gui.QLabel( message)
+    label.setStyleSheet("QWidget { font-size:100em }" )
     label.setWindowFlags(Core.Qt.SplashScreen)
     label.show()
     Core.QTimer.singleShot(10000, app.quit)
