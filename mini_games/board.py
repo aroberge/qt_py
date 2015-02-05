@@ -1,12 +1,12 @@
 '''Simple board'''
 
-# from PyQt4 import QtCore
+from PyQt4 import QtCore
 from PyQt4 import QtGui
 
 
 class Board(QtGui.QWidget):
 
-    def __init__(self, parent, nb_cols, nb_rows, tile_size=32):
+    def __init__(self, parent, nb_cols=10, nb_rows=10, tile_size=32):
         super().__init__()
 
         self.parent = parent
@@ -18,22 +18,38 @@ class Board(QtGui.QWidget):
         self.height = self.tile_size * self.nb_rows
 
     def create_empty_grid(self):
+        '''creates a grid as a dict with (row, col) as keys
+           and None as values'''
         self.grid = {}
         for row in range(self.nb_rows):
             for col in range(self.nb_cols):
-                self.grid[(row, col)] = True
+                self.grid[(col, row)] = None
 
     def paintEvent(self, event):  # noqa
+        '''Overriden QWidget method'''
         painter = QtGui.QPainter()
         painter.begin(self)
         self.draw(painter)
         painter.end()
 
     def mousePressEvent(self, event):  # noqa
+        '''Overriden QWidget method'''
+        if event.button() == QtCore.Qt.RightButton:
+            button_clicked = "right"
+        elif event.button() == QtCore.Qt.LeftButton:
+            button_clicked = "left"
+
         col, row = self.which_tile_clicked(event)
-        self.send_message(str((col, row)))
+
+        self.handle_mouse_pressed(button_clicked, col, row)
+
+    def handle_mouse_pressed(self, button_clicked, col, row):
+        '''meant to be overriden'''
+        self.send_message("{} clicked at {}".format(button_clicked,
+                                                        (col, row)))
 
     def which_tile_clicked(self, event):
+        '''Determine which row and col mouse click occurred'''
         x = event.x()
         y = event.y()
         col = x // self.tile_size
@@ -41,6 +57,7 @@ class Board(QtGui.QWidget):
         return col, row
 
     def draw(self, painter):
+        '''Basic drawing method; usually overriden'''
         painter.setBrush(QtGui.QColor(200, 200, 200))
         painter.drawRect(0, 0, self.width, self.height)
 
@@ -54,10 +71,13 @@ class Board(QtGui.QWidget):
             painter.drawLine(x, 0, x, self.height)
 
     def send_message(self, message):
+        '''sends a message to the parent'''
         self.parent.receive_message(message)
 
 
-class Game(QtGui.QMainWindow):
+class TestGame(QtGui.QMainWindow):
+    '''Non real game set up to try various functions/methods
+       that can be used in games'''
 
     def __init__(self):
         super().__init__()
@@ -67,7 +87,7 @@ class Game(QtGui.QMainWindow):
 
         self.setWindowTitle("Test Game")
         self.statusbar = self.statusBar()
-        self.board = Board(self, 10, 10)
+        self.board = Board(self)
         self.setCentralWidget(self.board)
         self.resize(self.board.width, self.board.height)
         self.setFixedSize(self.board.width,
@@ -81,7 +101,7 @@ class Game(QtGui.QMainWindow):
 def main():
 
     app = QtGui.QApplication([])
-    Game()
+    TestGame()
     app.exec_()
 
 
