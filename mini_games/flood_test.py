@@ -88,6 +88,12 @@ class FloodTest(QtGui.QMainWindow):
             self.board.color = QtGui.QColor(200, 0, 0)
         elif event.key() == QtCore.Qt.Key_G:
             self.board.color = QtGui.QColor(0, 200, 0)
+        elif event.key() == QtCore.Qt.Key_F:
+            self.showFullScreen()
+            print(self.width(), self.height())
+        elif event.key() == QtCore.Qt.Key_Escape:
+            self.resize(self.board.width, self.board.height)
+            self.show()
 
 
 def main():
