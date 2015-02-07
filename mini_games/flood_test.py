@@ -36,16 +36,17 @@ class ExperimentalBoard(board.Board):
                 painter.setBrush(self.grid[tile])
                 painter.drawRect(x, y, self.tile_size, self.tile_size)
 
-    def handle_mouse_pressed(self, button_clicked, tile):
+    def handle_left_click(self, tile):
         '''meant to be overriden'''
-        if button_clicked == "left":
-            self.grid[tile] = self.color
-            self.repaint()
-        else:
-            old_color = self.grid[tile]
-            x, y = tile
-            self.flood_fill(x, y, old_color, self.color)
-            self.repaint()
+        self.grid[tile] = self.color
+        self.repaint()
+
+    def handle_right_click(self, tile):
+        '''meant to be overriden'''
+        old_color = self.grid[tile]
+        x, y = tile
+        self.flood_fill(x, y, old_color, self.color)
+        self.repaint()
 
     def flood_fill(self, x, y, old_color, new_color):
         if (x, y) not in self.grid:

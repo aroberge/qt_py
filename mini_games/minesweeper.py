@@ -70,45 +70,46 @@ class MyBoard(board.Board):
             painter.drawImage(col*self.tile_size, row*self.tile_size,
                 self.grid[tile].image)
 
-    def handle_mouse_pressed(self, button_clicked, tile):
+    def handle_left_click(self, tile):
         '''meant to be overriden'''
-        if button_clicked == "right":
-            if not self.game_started:
-                return
-            try:
-                self.handle_right_click(tile)
-                message = "{} mines left".format(self.nb_mines - self.marked_mines)
-            except:
-                self.repaint()
-                print("Game over!")
-                return
-
+        message = "{} mines left".format(self.nb_mines - self.marked_mines)
+        if not self.game_started:
+            self.game_init(tile)
+        if self.grid[tile].value is None:
+            self.open_empty_region(tile)
         else:
-            message = "{} mines left".format(self.nb_mines - self.marked_mines)
-            if not self.game_started:
-                self.game_init(tile)
-            if self.grid[tile].value is None:
-                self.open_empty_region(tile)
-            else:
-                self.grid[tile].image = images[self.grid[tile].value]
-                if self.grid[tile].value == "mine":
-                    message = "You lose!"
+            self.grid[tile].image = images[self.grid[tile].value]
+            if self.grid[tile].value == "mine":
+                message = "You lose!"
         self.repaint()
         self.send_message(message)
 
+
     def handle_right_click(self, tile):
+        if not self.game_started:
+            return
         if self.grid[tile].image == images["covered"]:
             self.grid[tile].image = images["flag_mine"]
             self.marked_mines += 1
+            message = "{} mines left".format(self.nb_mines - self.marked_mines)
+            self.send_message(message)
             if self.marked_mines == self.nb_mines:
-                self.evaluate_position()
+                try:
+                    self.evaluate_position()
+                except:
+                    self.repaint()
+                    print("Game over!")
+                    return
         elif self.grid[tile].image == images["flag_mine"]:
             self.grid[tile].image = images["flag_suspect"]
             self.marked_mines -= 1
+            message = "{} mines left".format(self.nb_mines - self.marked_mines)
+            self.send_message(message)
         elif self.grid[tile].image == images["flag_suspect"]:
             self.grid[tile].image = images["covered"]
         else:
             return
+        self.repaint()
 
     def evaluate_position(self):
         for tile in self.grid:
@@ -118,7 +119,6 @@ class MyBoard(board.Board):
                     raise Exception
         self.send_message("You win!")
         raise Exception
-
 
     def open_empty_region(self, tile):
         if tile not in self.grid:

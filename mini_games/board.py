@@ -34,18 +34,19 @@ class Board(QtGui.QWidget):
 
     def mousePressEvent(self, event):  # noqa
         '''Overriden QWidget method'''
-        if event.button() == QtCore.Qt.RightButton:
-            button_clicked = "right"
-        elif event.button() == QtCore.Qt.LeftButton:
-            button_clicked = "left"
-
         tile = self.which_tile_clicked(event)
+        if event.button() == QtCore.Qt.RightButton:
+            self.handle_right_click(tile)
+        elif event.button() == QtCore.Qt.LeftButton:
+            self.handle_left_click(tile)
 
-        self.handle_mouse_pressed(button_clicked, tile)
-
-    def handle_mouse_pressed(self, button_clicked, tile):
+    def handle_right_click(self, tile):
         '''meant to be overriden'''
-        self.send_message("{} clicked at {}".format(button_clicked, tile))
+        self.send_message("{} clicked at {}".format("right", tile))
+
+    def handle_left_click(self, tile):
+        '''meant to be overriden'''
+        self.send_message("{} clicked at {}".format("left", tile))
 
     def which_tile_clicked(self, event):
         '''Determine which row and col mouse click occurred'''
