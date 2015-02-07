@@ -27,7 +27,7 @@ class MyBoard(board.Board):
         super().__init__(*args, **kwargs)
         self.game_started = False
         self.game_init((None, None))
-        self.nb_mines = 30
+        self.nb_mines = 10
 
     def game_init(self, tile):
         if tile == (None, None):
@@ -75,12 +75,29 @@ class MyBoard(board.Board):
         if not self.game_started:
             self.game_init(tile)
         if self.grid[tile].value is None:
-            self.grid[tile].image = images["empty"]
+            self.open_empty_region(tile)
+            #self.grid[tile].image = images["empty"]
         else:
             self.grid[tile].image = images[self.grid[tile].value]
 
         self.repaint()
         self.send_message(message)
+
+    def open_empty_region(self, tile):
+        if tile not in self.grid:
+            return
+        if self.grid[tile].value is not None:
+            self.grid[tile].image = images[self.grid[tile].value]
+            return
+
+        if self.grid[tile].image == images["empty"]:
+            return
+        self.grid[tile].image = images["empty"]
+        x, y = tile
+        self.open_empty_region((x-1, y))
+        self.open_empty_region((x+1, y))
+        self.open_empty_region((x, y-1))
+        self.open_empty_region((x, y+1))
 
 
 class TestGame(QtGui.QMainWindow):
