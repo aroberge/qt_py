@@ -27,12 +27,39 @@ class MyBoard(board.Board):
         super().__init__(*args, **kwargs)
         self.game_started = False
         self.game_init((None, None))
+        self.nb_mines = 30
 
     def game_init(self, tile):
-        if tile[0] is None:
+        if tile == (None, None):
             for tile_ in self.grid:
                 self.grid[tile_] = Tile(images["covered"], None)
             return
+        mines = 0
+        while mines < self.nb_mines:
+            x = random.randint(0, self.nb_cols-1)
+            y = random.randint(0, self.nb_rows-1)
+            if (x, y) == tile:  # do not put a bomb at location of first click
+                continue
+            if self.grid[(x, y)].value is None:
+                self.grid[(x, y)].value = "mine"
+                mines += 1
+        for tile_ in self.grid:
+            if self.grid[tile_].value != "mine":
+                self.count_mine_neighbours(tile_)
+        self.game_started = True
+
+    def count_mine_neighbours(self, tile):
+        mines = 0
+        for i in [-1, 0, 1]:
+            for j in [-1, 0, 1]:
+                if i==j and i== 0:
+                    continue
+                neighbour = (tile[0]+i, tile[1]+j)
+                if neighbour in self.grid:
+                    if self.grid[neighbour].value == "mine":
+                        mines += 1
+        if mines != 0:
+            self.grid[tile].value = mines
 
     def draw(self, painter):
         '''Basic drawing method; usually overriden'''
@@ -42,14 +69,18 @@ class MyBoard(board.Board):
             painter.drawImage(col*self.tile_size, row*self.tile_size,
                 self.grid[tile].image)
 
-
     def handle_mouse_pressed(self, button_clicked, tile):
         '''meant to be overriden'''
+        message = "{} clicked at {}".format(button_clicked, tile)
         if not self.game_started:
             self.game_init(tile)
-        self.grid[tile].image = images["empty"]
+        if self.grid[tile].value is None:
+            self.grid[tile].image = images["empty"]
+        else:
+            self.grid[tile].image = images[self.grid[tile].value]
+
         self.repaint()
-        self.send_message("{} clicked at {}".format(button_clicked, tile))
+        self.send_message(message)
 
 
 class TestGame(QtGui.QMainWindow):
