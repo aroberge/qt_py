@@ -39,14 +39,13 @@ class Board(QtGui.QWidget):
         elif event.button() == QtCore.Qt.LeftButton:
             button_clicked = "left"
 
-        col, row = self.which_tile_clicked(event)
+        tile = self.which_tile_clicked(event)
 
-        self.handle_mouse_pressed(button_clicked, col, row)
+        self.handle_mouse_pressed(button_clicked, tile)
 
-    def handle_mouse_pressed(self, button_clicked, col, row):
+    def handle_mouse_pressed(self, button_clicked, tile):
         '''meant to be overriden'''
-        self.send_message("{} clicked at {}".format(button_clicked,
-                                                        (col, row)))
+        self.send_message("{} clicked at {}".format(button_clicked, tile))
 
     def which_tile_clicked(self, event):
         '''Determine which row and col mouse click occurred'''

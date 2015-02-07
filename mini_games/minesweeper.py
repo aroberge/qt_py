@@ -1,7 +1,14 @@
 
-import board
+import random
 
 from PyQt4 import QtGui
+
+import board
+
+class Tile:
+    def __init__(self, image=None, value=None):
+        self.image = image
+        self.value = value
 
 
 images = {}
@@ -18,7 +25,14 @@ class MyBoard(board.Board):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.color = QtGui.QColor(200, 0, 0)
+        self.game_started = False
+        self.game_init((None, None))
+
+    def game_init(self, tile):
+        if tile[0] is None:
+            for tile_ in self.grid:
+                self.grid[tile_] = Tile(images["covered"], None)
+            return
 
     def draw(self, painter):
         '''Basic drawing method; usually overriden'''
@@ -26,7 +40,16 @@ class MyBoard(board.Board):
         for tile in self.grid:
             col, row = tile
             painter.drawImage(col*self.tile_size, row*self.tile_size,
-                images["covered"])
+                self.grid[tile].image)
+
+
+    def handle_mouse_pressed(self, button_clicked, tile):
+        '''meant to be overriden'''
+        if not self.game_started:
+            self.game_init(tile)
+        self.grid[tile].image = images["empty"]
+        self.repaint()
+        self.send_message("{} clicked at {}".format(button_clicked, tile))
 
 
 class TestGame(QtGui.QMainWindow):
