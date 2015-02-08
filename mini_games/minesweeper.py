@@ -29,6 +29,7 @@ class MyBoard(board.Board):
         self.game_init((None, None))
         self.nb_mines = 10
         self.marked_mines = 0
+        self.game_over = False
 
     def game_init(self, tile):
         if tile == (None, None):
@@ -70,6 +71,11 @@ class MyBoard(board.Board):
             painter.drawImage(col*self.tile_size, row*self.tile_size,
                 self.grid[tile].image)
 
+    def mousePressEvent(self, event):
+        if self.game_over:
+            return
+        super().mousePressEvent(event)
+
     def handle_left_click(self, tile):
         '''meant to be overriden'''
         message = "{} mines left".format(self.nb_mines - self.marked_mines)
@@ -78,9 +84,12 @@ class MyBoard(board.Board):
         if self.grid[tile].value is None:
             self.open_empty_region(tile)
         else:
+            if self.grid[tile].image == images["flag_mine"]:
+                self.marked_mines -= 1
             self.grid[tile].image = images[self.grid[tile].value]
             if self.grid[tile].value == "mine":
                 message = "You lose!"
+                self.game_over = True
         self.repaint()
         self.send_message(message)
 
@@ -94,12 +103,8 @@ class MyBoard(board.Board):
             message = "{} mines left".format(self.nb_mines - self.marked_mines)
             self.send_message(message)
             if self.marked_mines == self.nb_mines:
-                try:
-                    self.evaluate_position()
-                except:
-                    self.repaint()
-                    print("Game over!")
-                    return
+                self.game_over = True
+                self.evaluate_position()
         elif self.grid[tile].image == images["flag_mine"]:
             self.grid[tile].image = images["flag_suspect"]
             self.marked_mines -= 1
@@ -116,9 +121,30 @@ class MyBoard(board.Board):
             if self.grid[tile].value == "mine":
                 if self.grid[tile].image != images["flag_mine"]:
                     self.send_message("You lose")
-                    raise Exception
+                    self.show_losing_board()
+                    return
+
+        self.show_winning_board()
         self.send_message("You win!")
-        raise Exception
+        return
+
+    def show_winning_board(self):
+        '''after all mines have been guessed correctly, uncover remaining
+           tiles'''
+        for tile in self.grid:
+            if self.grid[tile].image == images["covered"]:
+                self.grid[tile].image = images[self.grid[tile].value]
+
+
+    def show_losing_board(self):
+        '''Show incorrect flags'''
+        for tile in self.grid:
+            cell = self.grid[tile]
+            if (cell.image == images["flag_mine"] and cell.value != "mine"):
+                cell.image = images["flag_mine_wrong"]
+            elif cell.value == "mine" and cell.image != images["flag_mine"]:
+                cell.image = images["mine"]
+
 
     def open_empty_region(self, tile):
         if tile not in self.grid:
