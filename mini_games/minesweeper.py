@@ -31,6 +31,15 @@ class MyBoard(board.Board):
         self.marked_mines = 0
         self.game_over = False
 
+    def reset(self):
+        #self.create_empty_grid()
+        self.game_init((None, None))
+        self.nb_mines = 10
+        self.marked_mines = 0
+        self.game_over = False
+        self.game_started = False
+        self.repaint()
+
     def game_init(self, tile):
         if tile == (None, None):
             for tile_ in self.grid:
@@ -168,17 +177,22 @@ class TestGame(QtGui.QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.board = MyBoard(self, tile_size=24)
         self.init_ui()
 
     def init_ui(self):
 
         self.setWindowTitle("Test Game")
         self.statusbar = self.statusBar()
-        self.board = MyBoard(self, tile_size=24)
+        menu = self.menuBar()
+        new_game_menu = menu.addMenu("New Game")
+        new_game_action = QtGui.QAction("Easy", self)
+        new_game_action.triggered.connect(self.board.reset)
+        new_game_menu.addAction(new_game_action)
         self.setCentralWidget(self.board)
         self.resize(self.board.width, self.board.height)
         self.setFixedSize(self.board.width,
-                          self.board.height+self.statusbar.height())
+            self.board.height+self.statusbar.height()+menu.height())
         self.show()
 
     def receive_message(self, message):
